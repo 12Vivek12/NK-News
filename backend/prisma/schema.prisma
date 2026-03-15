@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  REPORTER
+  READER
+}
+
+enum ArticleStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  PUBLISHED
+  REJECTED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(READER)
+  articles  Article[]
+  comments  Comment[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  slug     String    @unique
+  articles Article[]
+}
+
+model Tag {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  slug     String    @unique
+  articles Article[]
+}
+
+model Article {
+  id              String        @id @default(uuid())
+  title           String
+  subtitle        String?
+  slug            String        @unique
+  content         String        @db.Text
+  featuredImage   String?
+  status          ArticleStatus @default(DRAFT)
+  publishDate     DateTime?
+  
+  authorId        String
+  author          User          @relation(fields: [authorId], references: [id])
+  
+  categoryId      String
+  category        Category      @relation(fields: [categoryId], references: [id])
+  
+  tags            Tag[]
+  comments        Comment[]
+  
+  seoTitle        String?
+  seoDescription  String?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id])
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  authorName String? // For guest comments
+  createdAt DateTime @default(now())
+}
+
+model Advertisement {
+  id          String   @id @default(uuid())
+  name        String
+  position    String   // e.g., 'HEADER', 'SIDEBAR', 'IN_ARTICLE'
+  adType      String   // e.g., 'IMAGE', 'GOOGLE_ADS', 'HTML'
+  code        String?  @db.Text
+  imageUrl    String?
+  linkUrl     String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
